@@ -13,12 +13,14 @@ class Bank extends EventEmitter {
         this.on("add", this.replenishClienAccount);
         this.on('error', this.handleError);
         this.on('get', this.getClientBalance);
-        this.on('withdraw', this.withdraw)
+        this.on('withdraw', this.withdraw);
+        this.on('send', this.transferMoney);
     }
 
     replenishClienAccount(clientId, amount) {
-        if (!clientId) {
-            this.emit('error', TypeError('Replenishment failed. Client Id is empty'))
+        let isId = this._isClientIdEmpty(clientId, TypeError('Replenishment failed. Client Id is empty'));
+        if (isId) {
+            return;
         }
 
         if (amount <= 0) {
@@ -31,13 +33,13 @@ class Bank extends EventEmitter {
     }
 
     getClientBalance(clientId, func) {
-        if (!clientId) {
-            this.emit('error', TypeError('Replenishment failed. Client Id is empty'));
+        let isId = this._isClientIdEmpty(clientId, TypeError('Replenishment failed. Client Id is empty'));
+        if (isId) {
             return;
         }
-        
+
         const clientData = this._getClientData(clientId);
-        if(!clientData) {
+        if (!clientData) {
             this.emit('error', TypeError('Client not found'));
             return;
         }
@@ -45,23 +47,31 @@ class Bank extends EventEmitter {
     }
 
     withdraw(clientId, sum) {
-        if (!clientId) {
-            this.emit('error', TypeError('Replenishment failed. Client Id is empty'));
-            return;
-        }
-
-        const clientData = this._getClientData(clientId);
-        if(!clientData) {
-            this.emit('error', TypeError('Client not found'));
-            return;
+        let isId = this._isClientIdEmpty(clientId, TypeError('Withdraw failed. Client Id is empty'));
+        if (isId) {
+            return false;
         }
         
-        if( clientData['balance'] < sum || sum <=0) {
-            this.emit('error', TypeError('Not enough money to withdraw or the sum cannot be equal zero or less'));
-            return;
+        const clientData = this._getClientData(clientId);
+        if (!clientData) {
+            this.emit('error', TypeError('Client not found'));
+            return false;
         }
-        clientData['balance'] -=sum;
 
+        if (clientData['balance'] < sum || sum <= 0) {
+            this.emit('error', TypeError('Not enough money to withdraw or the sum cannot be equal zero or less'));
+            return false;
+        }else {
+            clientData['balance'] -= sum;
+            return true;
+        }
+
+    }
+
+    transferMoney(clienIdSent, clientIdGet, sum) {
+        if(this.withdraw(clienIdSent, sum)) {
+            this.replenishClienAccount(clientIdGet, sum)
+        }
     }
 
     register(person) {
@@ -102,24 +112,36 @@ class Bank extends EventEmitter {
         return clientData;
     }
 
+    _isClientIdEmpty(id, errorMsg) {
+        if (!id) {
+            this.emit('error', errorMsg);
+            return true;
+        }
+        return false;
+    }
+
 }
 
 const bank = new Bank();
 
-const personId = bank.register({
+const personFirstId = bank.register({
     name: 'Pitter',
     balance: 100
 });
-//console.log('personId :>> ', personId);
 
-bank.emit('add', personId, 50);
-
-bank.emit('get', personId, (balance) => {
-    console.log(`I have ${balance}₴`); // I have 120₴
+const personSecondId = bank.register({
+    name: 'Oliver White',
+    balance: 700
 });
 
-bank.emit('withdraw', personId, 10);
+bank.emit('add', personFirstId, 50);
+bank.emit('send', personFirstId, personSecondId, 101);
 
-bank.emit('get', personId, (balance) => {
+//bank.emit('withdraw', personFirstId, 10);
+
+bank.emit('get', personFirstId, (balance) => {
+    console.log(`I have ${balance}₴`); // I have 120₴
+});
+bank.emit('get', personSecondId, (balance) => {
     console.log(`I have ${balance}₴`); // I have 120₴
 });
