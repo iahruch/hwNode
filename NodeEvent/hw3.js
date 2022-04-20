@@ -15,6 +15,7 @@ class Bank extends EventEmitter {
         this.on('get', this.getClientBalance);
         this.on('withdraw', this.withdraw);
         this.on('send', this.transferMoney);
+        this.on('changeLimit', this.changeLimit);
     }
 
     replenishClienAccount(clientId, amount) {
@@ -46,30 +47,61 @@ class Bank extends EventEmitter {
         func(clientData['balance']);
     }
 
+    changeLimit(clientId, func) {
+        let isId = this._isClientIdEmpty(clientId, TypeError('Withdraw failed. Client Id is empty'));
+        if (isId) {
+            return false;
+        } 
+
+        const data = this._getClientData(clientId);
+        if (!data) {
+            this.emit('error', TypeError('Client not found'));
+            return false;
+        }
+
+        data['limit'] = func;
+
+    }
+
     withdraw(clientId, sum) {
         let isId = this._isClientIdEmpty(clientId, TypeError('Withdraw failed. Client Id is empty'));
         if (isId) {
             return false;
         }
-        
+
         const clientData = this._getClientData(clientId);
         if (!clientData) {
             this.emit('error', TypeError('Client not found'));
             return false;
         }
 
+        if(!this._checkLimit(clientData, sum)){
+            this.emit('error', TypeError('Limit is exceeded!!!'));
+            return;
+        }
+
+
         if (clientData['balance'] < sum || sum <= 0) {
             this.emit('error', TypeError('Not enough money to withdraw or the sum cannot be equal zero or less'));
             return false;
-        }else {
+        } else {
             clientData['balance'] -= sum;
             return true;
         }
 
     }
 
+    _checkLimit(clientData, amount) {
+
+        let currentBalance = clientData['balance'];
+        let updatedBalance = clientData['balance'] - amount;
+
+        let res = clientData['limit'](amount, currentBalance, updatedBalance);
+        return res;
+    }
+
     transferMoney(clienIdSent, clientIdGet, sum) {
-        if(this.withdraw(clienIdSent, sum)) {
+        if (this.withdraw(clienIdSent, sum)) {
             this.replenishClienAccount(clientIdGet, sum)
         }
     }
@@ -126,22 +158,25 @@ const bank = new Bank();
 
 const personFirstId = bank.register({
     name: 'Pitter',
-    balance: 100
+    balance: 801,
+    limit: amount => { return amount < 10 }
 });
 
-const personSecondId = bank.register({
-    name: 'Oliver White',
-    balance: 700
+//bank.emit('withdraw', personFirstId, 9);
+
+bank.emit('changeLimit', personFirstId, (amount, currentBalance,
+    updatedBalance) => {
+    return amount < 100 && updatedBalance > 700;
 });
 
-bank.emit('add', personFirstId, 50);
-bank.emit('send', personFirstId, personSecondId, 101);
 
-//bank.emit('withdraw', personFirstId, 10);
+bank.emit('changeLimit', personFirstId, (amount, currentBalance,
+    updatedBalance) => {
+     return amount < 100 && updatedBalance > 700 && currentBalance > 800;
+    });
+
+bank.emit('withdraw', personFirstId, 99);
 
 bank.emit('get', personFirstId, (balance) => {
-    console.log(`I have ${balance}₴`); // I have 120₴
-});
-bank.emit('get', personSecondId, (balance) => {
     console.log(`I have ${balance}₴`); // I have 120₴
 });
