@@ -18,7 +18,7 @@ export class Ui extends Readable {
     init() {
         this.on('data', chunk => {
             console.log('\n---');
-            console.log(`chunk = ${chunk} ${this._readableState.flowing}` );
+            console.log(`chunk = ${chunk}` );
             console.log('---\n');
         });
 
@@ -33,11 +33,13 @@ export class Ui extends Readable {
 
 
     _read() {
+        let source = this.constructor.name.toLowerCase();
+        
         let data = this.data.shift();
         if (!data) {
             this.push(null);
         } else {
-            this.push(data);
+            this.push({...data, source});
         }
     }
 }

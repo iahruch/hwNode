@@ -1,7 +1,7 @@
 import { Transform } from 'stream';
 
 export class Guardian extends Transform {
-    constructor(options = {}){
+    constructor(options = {}) {
         super(options);
         const {
             objectMode,
@@ -17,7 +17,7 @@ export class Guardian extends Transform {
     init() {
         this.on('data', (chunk) => {
             //console.log('data :>> ', this.data);
-            console.log('Event data transform stream');
+            // console.log('Event data transform stream');
         })
 
         this.on('error', (err) => {
@@ -30,13 +30,41 @@ export class Guardian extends Transform {
         this.on('finish', () => {
             console.log('\n------ Transform on finish'); //1
         });
-        
+
     }
 
 
     _transform(chunk, encoding, done) {
-           done(null, chunk);
+        let newData = {
+            meta: 'ui',
+            payload: {}
+
+        }
+        done(null, chunk);
         //    this.push(new Chunk(chunk));
         //    done();
     }
 }
+
+
+const convert = (from, to) => str => Buffer.from(str, from).toString(to)
+const utf8ToHex = convert('utf8', 'hex')
+const hexToUtf8 = convert('hex', 'utf8')
+// // Было
+// {
+//     name: 'Pitter Black',
+//     email: 'pblack@email.com',
+//     password: 'pblack_123'
+// }
+// // Стало
+// {
+//     meta: {
+//         source: 'ui'
+//     },
+//     payload: {
+//         name: 'Pitter Black',
+
+//         email: '70626c61636b40656d61696c2e636f6d',
+//         password: '70626c61636b5f313233'
+//     }
+// }
