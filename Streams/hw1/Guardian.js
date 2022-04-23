@@ -35,15 +35,22 @@ export class Guardian extends Transform {
 
 
     _transform(chunk, encoding, done) {
-        let newData = {
-            meta: 'ui',
-            payload: {}
+        let email = this._convertStrToHex(chunk['email']);
+        let password = this._convertStrToHex(chunk['password']);
+        let modchunk = {
+            meta: chunk['source'],
+            payload: {email, password}
 
         }
-        done(null, chunk);
+        done(null, modchunk);
         //    this.push(new Chunk(chunk));
         //    done();
     }
+
+    _convertStrToHex(str) {
+        return Buffer.from(str, 'utf8').toString('hex');
+    }
+    
 }
 
 

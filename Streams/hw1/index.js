@@ -1,18 +1,18 @@
 import { Ui } from "./UI.js";
 import { Guardian } from "./Guardian.js";
 import { AccountManager } from './AccountManager.js';
+import { pipeline } from "stream";
 
-const customers = [
-    {
+const customers = [{
         name: 'Pitter Black',
         email: 'pblack@email.com',
-        password: 'pblack_123'
-    },
-    {
-        name: 'Oliver White',
-        email: 'owhite@email.com',
-        password: 'owhite_456'
+        password: 'pblack_123',
     }
+    // ,{
+    //     name: 'Oliver White',
+    //     email: 'owhite@email.com',
+    //     password: 'owhite_456'
+    // }
 ];
 const opt_Ui = {
     objectMode: true
@@ -31,4 +31,14 @@ const opt_AccountManager = {
 }
 const manager = new AccountManager(opt_AccountManager);
 
-ui.pipe(guardian).pipe(manager);
+pipeline(
+    ui,
+    guardian,
+    manager,
+    (error) => {
+        console.log('Error pipilene :>> ', error);
+    }
+
+)
+
+//ui.pipe(guardian).pipe(manager);

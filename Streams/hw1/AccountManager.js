@@ -17,10 +17,10 @@ export class AccountManager extends Writable {
         });
 
         this.on('finish', () => {
-            console.log('\n------ writable on finish');           
+            console.log('\n------ writable on finish');
         });
         this.on('close', () => {
-            console.log('\n------ writable on close');           
+            console.log('\n------ writable on close');
         });
     }
 
@@ -31,5 +31,6 @@ export class AccountManager extends Writable {
         console.log('------ writable');
         done();
     }
-}
 
+
+}
