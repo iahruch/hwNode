@@ -9,7 +9,7 @@ export class AccountManager extends Writable {
 
     init() {
         this.on('drain', () => {
-            console.log('\n------ writable on drain');
+            //  console.log('\n------ writable on drain');
         });
 
         this.on('error', error => {
@@ -17,10 +17,10 @@ export class AccountManager extends Writable {
         });
 
         this.on('finish', () => {
-            console.log('\n------ writable on finish');
+            //  console.log('\n------ writable on finish');
         });
         this.on('close', () => {
-            console.log('\n------ writable on close');
+            //  console.log('\n------ writable on close');
         });
     }
 

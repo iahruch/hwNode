@@ -1,7 +1,9 @@
+import { pipeline } from "stream";
+
 import { Ui } from "./UI.js";
 import { Guardian } from "./Guardian.js";
 import { AccountManager } from './AccountManager.js';
-import { pipeline } from "stream";
+import { Logger } from "./Logger.js";
 
 const customers = [{
         name: 'Pitter Black',
@@ -19,12 +21,14 @@ const opt_Ui = {
 }
 const ui = new Ui(customers, opt_Ui);
 
-const opt_Guardian = {
+const opt_transform = {
     writableObjectMode: true,
     readableObjectMode: true,
     decodeStrings: false
 }
-const guardian = new Guardian(opt_Guardian);
+const guardian = new Guardian(opt_transform);
+
+const logger = new Logger(opt_transform);
 
 const opt_AccountManager = {
     objectMode: true
@@ -34,6 +38,7 @@ const manager = new AccountManager(opt_AccountManager);
 pipeline(
     ui,
     guardian,
+    logger,
     manager,
     (error) => {
         console.log('Error pipilene :>> ', error);

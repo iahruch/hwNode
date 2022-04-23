@@ -3,21 +3,13 @@ import { Transform } from 'stream';
 export class Guardian extends Transform {
     constructor(options = {}) {
         super(options);
-        const {
-            objectMode,
-            highWaterMark,
-            buffer,
-            length,
-            flowing
-        } = this._readableState;
-
         this.init();
     }
 
     init() {
         this.on('data', (chunk) => {
             //console.log('data :>> ', this.data);
-            // console.log('Event data transform stream');
+            // console.log('Event data transform stream', chunk);
         })
 
         this.on('error', (err) => {
@@ -25,21 +17,23 @@ export class Guardian extends Transform {
         })
 
         this.on('close', () => {
-            console.log('\n------ Transform on close'); //2
+            // console.log('\n------ Transform on close'); //2
         });
         this.on('finish', () => {
-            console.log('\n------ Transform on finish'); //1
+            // console.log('\n------ Transform on finish'); //1
         });
 
     }
 
 
     _transform(chunk, encoding, done) {
+        console.log('Transfor stream Guardian (_transfor) :>> ');
+
         let email = this._convertStrToHex(chunk['email']);
         let password = this._convertStrToHex(chunk['password']);
         let modchunk = {
             meta: chunk['source'],
-            payload: {email, password}
+            payload: { email, password }
 
         }
         done(null, modchunk);
@@ -50,13 +44,13 @@ export class Guardian extends Transform {
     _convertStrToHex(str) {
         return Buffer.from(str, 'utf8').toString('hex');
     }
-    
+
 }
 
 
-const convert = (from, to) => str => Buffer.from(str, from).toString(to)
-const utf8ToHex = convert('utf8', 'hex')
-const hexToUtf8 = convert('hex', 'utf8')
+// const convert = (from, to) => str => Buffer.from(str, from).toString(to)
+// const utf8ToHex = convert('utf8', 'hex')
+// const hexToUtf8 = convert('hex', 'utf8')
 // // Было
 // {
 //     name: 'Pitter Black',
