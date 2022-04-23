@@ -27,7 +27,7 @@ export class AccountManager extends Writable {
     _write(chunk, encoding, done) {
         //  console.log(typeof chunk);
         console.log('------ writable');
-        console.log(chunk);
+        console.log(chunk['payload']);
         console.log('------ writable');
         done();
     }
