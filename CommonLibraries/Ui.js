@@ -16,6 +16,11 @@ export class Ui extends Readable {
         this.initListeners();
     }
     initListeners() {
+        this.on('data', chunk => {
+            console.log('------ readable');
+            console.log('Readable stream :>> ', chunk);
+            console.log('------ readable');
+        })
         this.on('error', error => {
             console.log('ERROR: Readable stream  :>> ', error.message);
         });

@@ -10,7 +10,6 @@ export class Guardian extends Transform {
     constructor(opts) {
         super(opts);
         this.initListeners();
-        // this.initCiper();
     }
 
     initCiper() {
@@ -18,7 +17,6 @@ export class Guardian extends Transform {
         // let iv = await promisify(randomFill)(Buffer.alloc(16), 10);
         // const cipher = createCipheriv(algorithm, key, iv);
         // return cipher;
-
         return new Promise((resolve, reject) => {
             scrypt(password, 'salt', 24, (error, key) => {
                 if (error) reject(error);
@@ -35,8 +33,9 @@ export class Guardian extends Transform {
 
     initListeners() {
         this.on('data', (chunk) => {
-            //console.log('data :>> ', this.data);
-            // console.log('Event data transform stream', chunk);
+            console.log('------ transform');
+            console.log('Event data transform stream', chunk);
+            console.log('------ transform');
         })
 
         this.on('error', (error) => {
@@ -53,15 +52,17 @@ export class Guardian extends Transform {
 
     async _transform(chunk, encoding, done) {
         console.log('Transfor stream Guardian (_transfor) :>> ');
-        let { email, password } = chunk;
+        let { name, email, password, source } = chunk;
 
         const newChunk = {
-            email: await this._encryptData(email),
-            password: await this._encryptData(password)
+            meta: { source },
+            payload: {
+                name,
+                email: await this._encryptData(email),
+                password: await this._encryptData(password)
+            }
         }
         done(null, newChunk);
-        //    this.push(new Chunk(chunk));
-        //    done();
     }
 
     async _encryptData(data) {
@@ -78,12 +79,9 @@ export class Guardian extends Transform {
             return iv.toString('hex') + ":" + encrypted;
 
         } catch (error) {
-            console.log('_encryptData :>> ');
-            return encrypted;
+            throw Error(error);
         }
+        return encrypted;
     }
-
-
-
 
 }

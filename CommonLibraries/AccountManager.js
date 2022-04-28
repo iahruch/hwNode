@@ -1,5 +1,5 @@
 import { Writable } from 'stream';
-import { scrypt, randomFill, createDecipheriv, scryptSync } from 'crypto';
+import { scrypt, createDecipheriv } from 'crypto';
 
 const algorithm = 'aes192';
 const passwordData = '1qaZxsw2@3edcVfr4';
@@ -29,32 +29,33 @@ export class AccountManager extends Writable {
     }
 
     async _write(chunk, encoding, done) {
-        let { email, password } = chunk;
 
-        const newChunk = {
+        let { email, password } = chunk['payload'];
+
+        const payload = {
             email: await this._decryptData(email),
             password: await this._decryptData(password)
         }
+        const newChunk = {...chunk, payload };
 
-        //  console.log(typeof chunk);
         console.log('------ writable');
         console.log(newChunk);
         console.log('------ writable');
-
         done();
     }
 
 
     _decryptData(email) {
+
         return new Promise((resolve, reject) => {
             scrypt(passwordData, 'salt', 24, (error, key) => {
                 if (error) reject(error);
 
                 let [iv, data] = email.split(':');
 
-                let ivv = Buffer.from(iv, 'hex');
+                let ivMod = Buffer.from(iv, 'hex');
 
-                const decipher = createDecipheriv(algorithm, key, ivv);
+                const decipher = createDecipheriv(algorithm, key, ivMod);
 
                 let decrypted = decipher.update(data, 'hex', 'utf8');
                 decrypted += decipher.final('utf8');
@@ -64,12 +65,3 @@ export class AccountManager extends Writable {
     }
 
 }
-
-// const decipher = crypto.createDecipher(algorithm, password);
-// const encrypted =
-//     '2dfcf91c4754a71d7063fe9436abfb05b86aba4ace8156334613e878b6e0bdcad677deeae40f086828832399a9407d61';
-
-// let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-// decrypted += decipher.final('utf8');
-// console.log(decrypted);
-// console.log(JSON.parse(decrypted));
