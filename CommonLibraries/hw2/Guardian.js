@@ -26,7 +26,7 @@ export class Guardian extends Transform {
     }
 
     async _transform(chunk, encoding, done) {
-        //console.log('Transfor stream Guardian (_transfor) :>> ');
+
         let { name, email, password, source } = chunk;
 
         let newChunk = {
@@ -36,7 +36,7 @@ export class Guardian extends Transform {
                 email: await this._encryptData(email),
                 password: await this._encryptData(password)
             }
-        }
+        };
 
         try {
             const privateKey = await readFile(path.resolve('csr', 'server-key.pem'));

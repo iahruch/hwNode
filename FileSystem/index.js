@@ -5,9 +5,10 @@ import { constants } from 'fs';
 import { EOL } from 'os';
 
 export class Json2csv extends EventEmitter {
-    constructor(filePath, opts = {}) {
+    constructor(filePath, fields = [], opts = {}) {
         super(opts);
         this.filePath = filePath;
+        this.sortFilds = new Set(fields);
         this.initListeners();
     }
 
@@ -19,7 +20,7 @@ export class Json2csv extends EventEmitter {
 
     async create() {
         console.log('object :>> ', this.filePath);
-
+        console.log('this.sortFilds :>> ', this.sortFilds);
         try {
             await access(this.filePath, constants.F_OK | constants.R_OK);
             console.log('Can access');
@@ -39,16 +40,21 @@ export class Json2csv extends EventEmitter {
             data.forEach(obj => {
                 let tempStr = '';
 
+                //add headers
                 if (isHeaders) {
                     Object.keys(obj).forEach(key => {
-                        csvStr = csvStr + key + delimiter;
+                        if (this.sortFilds.has(key)) {
+                            csvStr = csvStr + key + delimiter;
+                        }
                     })
                     csvStr = csvStr.slice(0, csvStr.length - 1) + EOL;
                     isHeaders = false;
                 }
-
+                // add data string    
                 Object.entries(obj).forEach(([key, val]) => {
-                    tempStr = tempStr + JSON.stringify(val) + delimiter;
+                    if (this.sortFilds.has(key)) {
+                        tempStr = tempStr + JSON.stringify(val) + delimiter;
+                    }
                 })
 
                 csvStr = csvStr + tempStr.slice(0, tempStr.length - 1) + EOL;
@@ -57,6 +63,8 @@ export class Json2csv extends EventEmitter {
         } catch (error) {
             throw Error('File has not been read');
         }
+
+
         try {
             await writeFile(path.resolve('comments.csv'), csvStr);
             console.log('Fale has been written :>> ');
@@ -68,5 +76,6 @@ export class Json2csv extends EventEmitter {
 
     }
 }
-const json2csv = new Json2csv(path.resolve('comments.json'));
+const fields = ['postId', 'id', 'name'];
+const json2csv = new Json2csv(path.resolve('comments.json'), fields);
 json2csv.create();
