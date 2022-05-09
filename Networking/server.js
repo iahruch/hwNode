@@ -1,6 +1,10 @@
-const net = require('net');
-const fs = require('fs');
-const path = require('path');
+import net from 'net';
+import * as path from 'path';
+import { access, readFile } from 'fs/promises';
+import { constants } from 'fs';
+import { json } from 'stream/consumers';
+
+
 
 const PORT = 8080;
 const HOSTNAME = 'localhost';
@@ -33,9 +37,10 @@ server.on('connection', socket => {
         }
 
         try {
-            await _searchData(JSON.parse(data));
+            const resultSearch = await _searchData(JSON.parse(data));
+            socket.write(JSON.stringify(resultSearch));
         } catch (error) {
-
+            throw TypeError('Something wrong');
         }
 
 
@@ -54,12 +59,51 @@ server.on('connection', socket => {
     })
 });
 
-const _searchData = async(data) => {
+const _searchData = async(searchData) => {
+    let usersData = [];
+    let filterArr = [];
+    try {
+        await access(path.resolve('users.json'), constants.F_OK);
+        console.log('can access');
+    } catch (error) {
+        throw Error('File don\'t exist or can\'t be read');
+    }
 
-    fs.readFile(path.join(__dirname, 'users.json'), 'utf-8', (error, usersData) => {
-        console.log('path.join(__dirname :>> ', path.join(__dirname, 'users.js'));
-        console.log('object data :>> ', usersData);
-    })
+    try {
+        usersData = await readFile(path.resolve('users.json'), { encoding: 'utf-8' });
+        //  console.log('object usersData :>> ', JSON.parse(usersData));
+
+        filterArr = JSON.parse(usersData).filter(elem => {
+            let map = new Map(Object.entries(elem));
+
+            const resultArr = [];
+            for (const [key, value] of Object.entries(searchData)) {
+
+                if (map.has(key) && typeof value !== 'object') {
+
+                    let regexp = new RegExp(value, "gi");
+                    resultArr.push(regexp.test(map.get(key)));
+
+                } else if (map.has(key) && typeof value === 'object') {
+
+                    const valueMap = new Map(Object.entries(map.get(key)));
+
+                    for (const [keyNest, valueNest] of Object.entries(value)) {
+                        if (valueMap.has(keyNest)) {
+                            let regexp = new RegExp(valueNest, "gi");
+                            resultArr.push(regexp.test(valueMap.get(keyNest)));
+                        }
+                    }
+                }
+            } //end for
+
+            let isSearch = resultArr.every(i => i === true);
+            return isSearch ? true : false;
+        });
+    } catch (error) {
+        throw Error('File can\'t be read');
+    }
+    return filterArr;
 }
 const _checkDataType = (data) => {
     let res = true;
@@ -90,10 +134,6 @@ const _checkDataType = (data) => {
     return res;
 }
 
-// name: {
-//     first: "Ron",
-//     last: "McLaughlin"
-// }
 
 server.listen(PORT, HOSTNAME, () => {
     console.log('Server has started :>> ');
